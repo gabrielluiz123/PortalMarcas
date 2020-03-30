@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block 'titulo' %}Detalhes{%endblock%}
+{% block 'conteudo' %}
+<section class="bg-dark t-white vh-min-100 list-me z-2 p-rel pt-5 reveal l-fade-scroll" id="registro_oportunidade">
+	<div class="divisor bg-brand-light mb-5 mt-3"></div>
+	<div class="container p-5" id="contact">
+		<div class="row justify-content-center">
+			<div class="col-8 ml-2">
+                <h2 style="text-align: center !important;" class="menu-title">Meus Registros</h2><br>
+				<div class="row">
+  {% for registro in registros %}
+      <div class="col-sm-6">
+        <div style="background-color: transparent !important;" class="card">
+          <div class="card-body">
+            <h5 class="card-title"><a style="text-align: left !important;" href="{% url 'detalhe' registro.id %}">Cliente: {{registro.id_cliente}}</a></h5>
+            <ul>
+					<li><p>Vendedor: {{registro.id_vendedor}}</p></li>
+					<li><p>Data: {{registro.date_entered|naturalday}}</p></li>
+                     {% if vendedor %}
+						<li><p>Revenda: {{registro.id_revenda}}</p></li>
+					{% endif %}
+					{% if not registro.status and not registro.atualizado %}
+						<li><p style="color:yellow;">Status: Aguardando</p></li>
+					{% elif registro.atualizado and not registro.status %}
+						<li><p style="color:red;">Status: Não Aprovado</p></li>
+					{% else %}
+						<li><p style="color:green;">Status: Aprovado</p></li>
+					{% endif %}
+					{% if registro.status %}
+						<li><p>Data aprovação: {{registro.date_atualizado|naturalday}}</p></li>
+					{% elif registro.atualizado and not registro.status %}
+						<li><p>Data Reprovação: {{registro.date_atualizado|naturalday}}</p></li>
+					{% endif %}
+					{% if registro.numero_registro %}
+						<li><p>Número do Registro: {{registro.numero_registro}}</p></li>
+					{% endif %}
+				</ul>
+            <a href="{% url 'detalhe' registro.id  %}" class="btn btn-primary">Acessar Detalhes</a>
+          </div>
+        </div>
+      </div>
+     {% endfor %}
+</div>
+			</div>
+		</div>
+{% if users %}
+<div class="pagination">
+    <ul class="pagination">
+        {% if users.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1">&laquo;</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ users.previous_page_number }}#registro_oportunidade">&lsaquo;</a>
+        </li>
+        {% endif %}
+        {% for num in users.paginator.page_range %}
+            {% if users.number == num %}
+            <li class="page-item active">
+                <a class="page-link" href="?page={{ num }}#registro_oportunidade">{{ num }}</a>
+            </li>
+            {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}#registro_oportunidade">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}#registro_oportunidade">&rsaquo;</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}#registro_oportunidade">&raquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}
+	</div>
+</section>
+{% endblock %}

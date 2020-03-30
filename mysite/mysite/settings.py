@@ -1,5 +1,7 @@
 import os  # isort:skip
 gettext = lambda s: s
+import django_heroku
+django_heroku.settings(locals())
 DATA_DIR = os.path.dirname(os.path.dirname(__file__))
 """
 Django settings for mysite project.
