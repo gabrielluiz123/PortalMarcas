@@ -145,6 +145,7 @@ MIDDLEWARE = [
 
 
 INSTALLED_APPS = [
+    'gunicorn',
     'cmsplugin_polls',
     'django.contrib.humanize',
     'Cliente',
