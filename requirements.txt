@@ -1,7 +1,6 @@
 appdirs==1.4.3
 cmsplugin_polls
 distlib==0.3.0
-setuptools==1.0
 dj-database-url==0.5.0
 Django==2.2.3
 django-classy-tags==1.0.0
