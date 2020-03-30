@@ -12,6 +12,16 @@ from django.contrib import messages
 import smtplib
 import email.message
 
+from cms.app_base import CMSApp
+from cms.apphook_pool import apphook_pool
+
+@apphook_pool.register
+class DetalheApphook(CMSApp):
+    app_name = "detalhe"  # must match the application namespace
+    name = "Detalhes"
+
+    def get_urls(self, page=None, language=None, **kwargs):
+        return ["Detalhes.urls"]
 
 class DetalhesIndex(View):
     model = 'Registro'
@@ -20,22 +30,30 @@ class DetalhesIndex(View):
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
+        if request.META['HTTP_HOST'] == 'bluebird.portal.com.br:8000':
+            self.empresa = 'bluebird'
+        elif request.META['HTTP_HOST'] == 'chainway.portal.com.br:8000':
+            self.empresa = 'chainway'
         self.id_user = request.user
-        self.vendedor_user = Vendedor.objects.get(user_vendedor=self.id_user).is_gerente
+        try:
+            self.vendedor_user = Vendedor.objects.get(user_vendedor=self.id_user).is_gerente
+        except:
+            self.vendedor_user = None
         self.registros_att = Registro.objects.filter(atualizado=False)
         self.count_registro = len(self.registros_att)
         if self.vendedor_user:
-            self.registro = Registro.objects.all().order_by('-date_entered')
+            self.registro = Registro.objects.filter(marca=self.empresa).order_by('-date_entered')
         else:
             try:
-                self.revenda_user_id = Revenda_User.objects.get(user_revenda=self.id_user)
+                self.revenda_user_id = Revenda_User.objects.filter(user_revenda=self.id_user).first()
                 if self.revenda_user_id.is_admin:
                     self.revenda = Revenda.objects.filter(revenda_user__user_revenda=self.id_user).first()
-                    self.registro = Registro.objects.filter(id_revenda=self.revenda).order_by('-date_entered')
+                    self.registro = Registro.objects.filter(id_revenda=self.revenda, marca=self.empresa).order_by('-date_entered')
                 else:
-                    self.registro = Registro.objects.filter(id_revenda_user=self.revenda_user_id).order_by('-date_entered')
+                    self.registro = Registro.objects.filter(id_revenda_user=self.revenda_user_id, marca=self.empresa).order_by('-date_entered')
             except:
-                self.registro = None
+                self.id_vendedor_id = Vendedor.objects.filter(user_vendedor=self.id_user).first()
+                self.registro = Registro.objects.filter(id_vendedor=self.id_vendedor_id, marca=self.empresa).order_by('-date_entered')
         page = request.GET.get('page', 1)
         paginator = Paginator(self.registro, 6)
         try:
@@ -44,7 +62,9 @@ class DetalhesIndex(View):
             self.registro = paginator.page(1)
         except EmptyPage:
             self.registro = paginator.page(paginator.num_pages)
+
         self.contexto = {
+            'empresa': self.empresa,
             'number_registro': self.count_registro,
             'vendedor_gerente': self.vendedor_user,
             'vendedor': self.vendedor_user,
@@ -67,9 +87,13 @@ class DetalheIndex(View):
         self.vendedor_user = Vendedor.objects.get(user_vendedor=self.id_user).is_gerente
         self.revenda_user_id = Revenda_User.objects.get(user_revenda=self.id_user)
         pk = self.kwargs.get('pk')
+        if request.META['HTTP_HOST'] == 'bluebird.portal.com.br:8000':
+            self.empresa = 'bluebird'
+        elif request.META['HTTP_HOST'] == 'chainway.portal.com.br:8000':
+            self.empresa = 'chainway'
         try:
             if not self.vendedor_user:
-                self.registro = Registro.objects.get(id_revenda_user=self.revenda_user_id, pk=pk)
+                self.registro = Registro.objects.get(id_revenda_user=self.revenda_user_id, pk=pk, marca=self.empresa)
             else:
                 self.registro = Registro.objects.get(pk=pk)
             self.id_projeto = self.registro.id_projeto
@@ -82,7 +106,9 @@ class DetalheIndex(View):
                     self.i = 1
         except:
             self.registro = None
+
         self.contexto = {
+            'empresa': self.empresa,
             'is_gerente': self.vendedor_user,
             'i': self.i,
             'j': self.j,
@@ -105,7 +131,7 @@ class PostBusca(View):
         termo = self.request.GET.get('termo')
         self.id_user = request.user
         self.vendedor_user = Vendedor.objects.get(user_vendedor=self.id_user).is_gerente
-        self.registros_att = Registro.objects.filter(atualizado=False)
+        self.registros_att = Registro.objects.filter(atualizado=False, marca=self.empresa)
         self.count_registro = len(self.registros_att)
         if self.vendedor_user:
             qs = Registro.objects.filter(
@@ -115,9 +141,9 @@ class PostBusca(View):
             self.revenda_user_id = Revenda_User.objects.get(user_revenda=self.id_user)
             if self.revenda_user_id.is_admin:
                 self.revenda = Revenda.objects.filter(revenda_user__user_revenda=self.id_user).first()
-                self.registro = Registro.objects.filter(id_revenda=self.revenda).order_by('-date_entered')
+                self.registro = Registro.objects.filter(id_revenda=self.revenda, marca=self.empresa).order_by('-date_entered')
             else:
-                self.registro = Registro.objects.filter(id_revenda_user=self.revenda_user_id)
+                self.registro = Registro.objects.filter(id_revenda_user=self.revenda_user_id, marca=self.empresa)
             qs = Registro.objects.filter(
                 Q(id_revenda__razao_social__icontains=termo) | Q(id_cliente__razao_social__icontains=termo)
             ).filter(id_revenda_user=self.revenda_user_id).order_by('-date_entered')
@@ -129,7 +155,12 @@ class PostBusca(View):
             self.registro = paginator.page(1)
         except EmptyPage:
             self.registro = paginator.page(paginator.num_pages)
+        if request.META['HTTP_HOST'] == 'bluebird.portal.com.br:8000':
+            self.empresa = 'bluebird'
+        elif request.META['HTTP_HOST'] == 'chainway.portal.com.br:8000':
+            self.empresa = 'chainway'
         self.contexto = {
+            'empresa': self.empresa,
             'vendedor_gerente': self.vendedor_user,
             'number_registro': self.count_registro,
             'vendedor': self.vendedor_user,

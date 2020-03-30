@@ -1,7 +1,0 @@
-@mixin checkmark-variant($bg, $border){
-    background-color: $bg;
-    border-color: $border;
-    &::after{
-        background-color: $border;
-    }
-}

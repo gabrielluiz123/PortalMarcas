@@ -1,6 +1,9 @@
 from django.db import models
 from django.utils import timezone
 from Cliente.models import Revenda, Cliente_Final, Vendedor, Revenda_User
+from aldryn_apphooks_config.fields import AppHookConfigField
+from aldryn_apphooks_config.managers import AppHookConfigManager
+from django.db import models
 
 
 class Projeto(models.Model):
@@ -11,6 +14,8 @@ class Projeto(models.Model):
     parc_soft = models.CharField(max_length=255, verbose_name='Parceiro de software')
     date_concl = models.DateTimeField(default=timezone.now, verbose_name='Data de Conclusão')
     info_ad = models.TextField(verbose_name='Informações adicionais')
+
+    objects = AppHookConfigManager()
 
     def __str__(self):
         return self.aplicacao
@@ -29,6 +34,7 @@ class Registro(models.Model):
     atualizado = models.BooleanField(default=False, verbose_name='Atualizado')
     date_atualizado = models.DateField(verbose_name='Data Atualização', blank=True, null=True)
     numero_registro = models.CharField(max_length=150, verbose_name='Número de Registro', blank=True, null=True)
+    marca = models.CharField(max_length=150, verbose_name='Marca', blank=True, null=True)
 
     def __str__(self):
         return self.name

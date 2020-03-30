@@ -1,4 +1,5 @@
-{% extends 'base.html' %}
+{% extends 'base2.html' %}
+{% load cms_tags %}
 {% load static %}
 {% block 'titulo' %}Home{%endblock%}
 {% block 'conteudo' %}
@@ -14,14 +15,13 @@
                                 <div class="row mt-5 justify-content-center">
                                     <div class="col-sm-6 col-12 py-5 ">
                                         <div class="f-concert-one t-gray font-18px text-justify">
-                                            A Bluebird Inc é um dos maiores fabricantes de dispositivos móvies do mundo, tanto para mobilidade empresarial quanto para captura de dados, tecnologia, tablets robustos e meios de pagamento. Com amplo portfólio de produtos, a Bluebird abrange todos os mercados e setores da economia que conectam as pessoas e empresas à informação aonde quer que elas estejam. Os produtos são totalmente desenvolvidos com recursos avançados para atender às necessidades diárias dos clientes, tais como ultra-mobilidade, visibilidade em tempo real, robustez completa e tecnologia de computação easy-to-use combinados com a forma de como os funcionários trabalham em condições duras.
+                                            {% placeholder "content" %}
 
                                         </div>
                                     </div>
                                     <div class="col-sm-6 col-12 py-5  text-justify">
                                         <div class="f-concert-one t-gray font-18px">
 
-                                                São mais de 600 parceiros em todo o mundo que integram as soluções Bluebird e distribuem nossos produtos em cima de qualidade e confiabilidade em diversos negócios e aplicações. Com a experiência de nossos 20 anos de fornecimento das soluções de mobilidade para mais de 3.000 clientes em diversas indústrias, incluindo varejo, hotelaria, transporte e logística, finanças e setores públicos, a Bluebird está empenhada em apoiar os clientes a otimizar o fluxo de trabalho , melhorar a produtividade da força de trabalho e maximizar o investimento solução móvel
                                         </div>
                                     </div>
                                     <div class="col-sm-10 col-12 py-5 text-center ">
@@ -72,6 +72,7 @@
 
 </style>
   <!-- The slideshow -->
+    {% placeholder "carousel" %}
   <div class="carousel-inner" style="width:400px height:200px">
       {% for img in imgs %}
     <div class="carousel-item text-center {% if forloop.first %} active {%endif%}">

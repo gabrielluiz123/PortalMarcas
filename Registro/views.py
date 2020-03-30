@@ -1,50 +1,92 @@
 from django.shortcuts import redirect, render
 from django.views import View
 from django.contrib import messages, auth
-from Cms.models import Cms, Cms_Slider
 from .models import Projeto, Registro
 from Equipamento.models import Equipamento, Equip_Projeto
 from Cliente.models import Vendedor, Revenda, Cliente_Final, Revenda_User
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
+from cms.app_base import CMSApp
+from cms.apphook_pool import apphook_pool
+from cms.models.pluginmodel import CMSPlugin
+
+@apphook_pool.register
+class MyApphook(CMSApp):
+    app_name = "myapp"  # must match the application namespace
+    name = "My Apphook"
+
+
+    def get_urls(self, page=None, language=None, **kwargs):
+        return ["Registro.urls"]
+
+    def init_toolbar(self, request):
+        self.request = request
+        self.is_staff = self.request.user.is_staff
+        self.edit_mode = self.is_staff and self.request.session.get('cms_edit', False)
+        self.show_toolbar = self.is_staff or self.request.session.get('cms_edit', False)
+        self.show_toolbar = False
+        if self.request.session.get('cms_toolbar_disabled', True):
+            self.show_toolbar = False
 
 
 class RegistroIndex(View):
     model = 'Registro'
-    template_name = 'Registro/index.html'
-    cms_id = Cms.objects.latest('pk')
-    files = Cms_Slider.objects.filter(cms=cms_id)
+    template_name = 'sidebar_left.html'
     revendas = Revenda.objects.all()
     vendedores = Vendedor.objects.all()
 
     def setup(self, request, *args, **kwargs):
+        page = request.current_page
+        cover = None
+        if page:
+            cover_image_plugin = CMSPlugin.objects.filter(
+                placeholder__page=page,
+                placeholder__slot='cover_image',
+                plugin_type='FilerImagePlugin',
+            ).first()
+            if cover_image_plugin:
+                cover = cover_image_plugin.get_plugin_instance()[0]
         super().setup(request, *args, **kwargs)
+        if request.META['HTTP_HOST'] == 'bluebird.portal.com.br:8000':
+            self.empresa = 'bluebird'
+        elif request.META['HTTP_HOST'] == 'chainway.portal.com.br:8000':
+            self.empresa = 'chainway'
         self.id_user = request.user.id
         if self.id_user:
-            self.vendedor_user = Vendedor.objects.get(user_vendedor=self.id_user).is_gerente
-            self.registros_att = Registro.objects.filter(atualizado=False)
+            try:
+                self.vendedor_user = Vendedor.objects.get(user_vendedor=self.id_user).is_gerente
+            except:
+                self.vendedor_user= None
+            self.registros_att = Registro.objects.filter(atualizado=False, marca=self.empresa)
             self.count_registro = len(self.registros_att)
         else:
             self.vendedor_user = None
             self.registros_att = None
             self.count_registro = None
+
         self.contexto = {
+            'cover': cover,
+            'empresa': self.empresa,
             'number_registro': self.count_registro,
             'vendedor_gerente': self.vendedor_user,
             'revendas': self.revendas,
             'users': request.user.is_authenticated,
-            'imgs': self.files,
             'vendedores': self.vendedores,
         }
+
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, self.contexto)
 
     def post(self, request, *args, **kwargs):
+        if request.META['HTTP_HOST'] == 'bluebird.portal.com.br:8000':
+            self.empresa = 'bluebird'
+        elif request.META['HTTP_HOST'] == 'chainway.portal.com.br:8000':
+            self.empresa = 'chainway'
         self.contexto = {
+            'empresa': self.empresa,
             'revendas': self.revendas,
             'users': request.user.is_authenticated,
-            'imgs': self.files,
             'vendedores': self.vendedores,
             'cnpj_cliente': request.POST.get("cnpj_cliente"),
             'contact_cliente': request.POST.get("contact_cliente"),
@@ -140,7 +182,6 @@ class RegistroIndex(View):
             self.revenda_user_id = Revenda_User.objects.get(user_revenda=self.id_user)
             self.revenda_id = Revenda.objects.get(pk=self.revenda_user_id.revenda.id)
             revenda_id_b = self.revenda_id
-            print(revenda_id_b)
         else:
             try:
                 cnpj_revenda = request.POST.get("cnpj_revenda")
@@ -225,7 +266,7 @@ class RegistroIndex(View):
         contact_cliente = request.POST.get("contact_cliente")
         id_vendedor_b = request.POST.get("vendedor")
         id_vendedor = Vendedor.objects.get(id=id_vendedor_b)
-        registro = Registro(id_revenda=revenda_id_b, id_revenda_user=self.revenda_user_id, id_cliente=id_cliente_b, id_projeto=projeto_id, id_vendedor=id_vendedor, contato=contact_cliente)
+        registro = Registro(marca=self.empresa, id_revenda=revenda_id_b, id_revenda_user=self.revenda_user_id, id_cliente=id_cliente_b, id_projeto=projeto_id, id_vendedor=id_vendedor, contato=contact_cliente)
         try:
             registro.save()
             messages.success(request, 'Registro efetuado com sucesso!!')
@@ -251,9 +292,16 @@ class RegistroIndex(View):
         c = pycurl.Curl()
         c.setopt(c.URL, url)"""
 
-        return redirect('index')
+        return redirect('/?toolbar_off')
 
 
+
+class RegistroEditIndex(RegistroIndex):
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        return redirect('')
 def login(request):
     if request.method != 'POST':
         return render(request, 'accounts/login.html')
