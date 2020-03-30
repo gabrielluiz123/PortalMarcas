@@ -1,8 +1,4 @@
-import os  # isort:skip
-gettext = lambda s: s
-import django_heroku
-django_heroku.settings(locals())
-DATA_DIR = os.path.dirname(os.path.dirname(__file__))
+
 """
 Django settings for mysite project.
 
@@ -16,9 +12,14 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import os  # isort:skip
+gettext = lambda s: s
+import django_heroku
 
+DATA_DIR = os.path.dirname(os.path.dirname(__file__))
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -252,3 +253,5 @@ THUMBNAIL_PROCESSORS = (
     'filer.thumbnail_processors.scale_and_crop_with_subject_location',
     'easy_thumbnails.processors.filters'
 )
+
+django_heroku.settings(locals())
