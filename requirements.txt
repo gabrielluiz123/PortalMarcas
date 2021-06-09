@@ -2,7 +2,7 @@ appdirs==1.4.3
 cmsplugin_polls
 distlib==0.3.0
 dj-database-url==0.5.0
-Django==2.2.3
+Django==2.2.22
 django-cms==3.7.1
 django-formtools==2.2
 django-heroku==0.3.1
